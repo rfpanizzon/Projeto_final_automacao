@@ -22,13 +22,13 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "LCD16x2.h"
-#include "capsules.h"
-#include "relogio.h"
 #include <time.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "LCD16x2.h"
+#include "capsules.h"
+#include "relogio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -40,11 +40,12 @@
 /* USER CODE BEGIN PD */
 
 #define NUMBER_OF_CONVERSION 12
-#define scala_temperatura (3.3/4095)/0.005
-#define MAX_DUTY_CYCLE_VALUE_TIM2 3000
-#define MAX_DUTY_CYCLE_VALUE_TIM1 3000
 #define sim 1
 #define nao 0
+#define scala_temperatura (3.3 / 4095) / 0.005
+#define MAX_DUTY_CYCLE_VALUE_TIM2 3000
+#define MAX_DUTY_CYCLE_VALUE_TIM1 3000
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -62,44 +63,49 @@ TIM_HandleTypeDef htim4;
 
 /* USER CODE BEGIN PV */
 
-//Variáveis para as saídas e entradas da cafeteira
-uint16_t P1 = GPIO_PIN_3; //pino PB3
-uint8_t estadoP1;
-uint16_t P2 = GPIO_PIN_4; //pino PB4
-uint8_t estadoP2;
-uint16_t B1; //pino PA2
-uint16_t R1; //pino PA0
-uint16_t T1; //pino PA4
-uint16_t CP1; //pino PA1
-uint16_t T2; //pino PA5
-uint16_t Y1 = GPIO_PIN_12; //pino PB12
-uint16_t Y2 = GPIO_PIN_13; //pino PB13
-uint16_t Y3 = GPIO_PIN_14; //pino PB14
-uint16_t Y4 = GPIO_PIN_15; //pino PB15
+//Variáveis para as saídas e entradas da maquina
+uint8_t P1 = GPIO_PIN_3; //pino PB3
+uint8_t P2 = GPIO_PIN_4; //pino PB4
+
+
+uint8_t Y1 = GPIO_PIN_12; //pino PB12
+uint8_t Y2 = GPIO_PIN_13; //pino PB13
+uint8_t Y3 = GPIO_PIN_14; //pino PB14
+uint8_t Y4 = GPIO_PIN_15; //pino PB15
+
+uint16_t B1;               //pino PA2
+uint16_t R1;               //pino PA0
+uint16_t T1;               //pino PA4
+uint16_t CP1;              //pino PA1
+uint16_t T2;               //pino PA5
+
+uint8_t Bn1_bit0 = GPIO_PIN_11; //pino PA11
+uint8_t Bn1_bit1 = GPIO_PIN_12; //pino PA12
+uint8_t Bn1_bit2 = GPIO_PIN_15; //pino PA15
+
 uint8_t Bn1;
-uint16_t Bn1_bit0 = GPIO_PIN_11; //pino PA11
-uint16_t Bn1_bit1 = GPIO_PIN_12; //pino PA12
-uint16_t Bn1_bit2 = GPIO_PIN_15; //pino PA15
+uint8_t estadoP1;
+uint8_t estadoP2;
 
 //Variáveis para o DMA e ADC
 uint8_t adcDataReady;
 uint32_t adcData[NUMBER_OF_CONVERSION];
 
-//Variáveis para os botões
-uint16_t btn_c = GPIO_PIN_15; //pino PC15
-uint16_t btn_mais = GPIO_PIN_9; //pino PA9
+//Variáveis dos botões
+uint16_t btn_c = GPIO_PIN_15;    //pino PC15
+uint16_t btn_mais = GPIO_PIN_9;  //pino PA9
 uint16_t btn_menos = GPIO_PIN_8; //pino PA8
-uint16_t btn_s = GPIO_PIN_14; //pino PC14
+uint16_t btn_s = GPIO_PIN_14;    //pino PC14
 uint8_t state_btn_c;
 uint8_t state_btn_mais;
 uint8_t state_btn_menos;
 uint8_t state_btn_s;
 
-//Variáveis usadas para auxílio
-uint8_t compararcap;
+//outras variaveis
+uint8_t testee;
 int32_t i;
 int32_t j;
-uint8_t estadoRelogio;
+uint8_t testeRelogio;
 int8_t selecao = -1;
 int8_t last_selecao = -1;
 uint8_t tela;
@@ -111,7 +117,7 @@ uint32_t dutyCycle_TIM2_CH2;
 uint16_t horas;
 uint16_t minutos;
 uint16_t segundos;
-char aux3[2];
+char auxrelogio[2];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -147,10 +153,10 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-	SystemClock_Config();
-	MX_GPIO_Init();
-	LCD_Init();
-	LCD_Clear();
+  SystemClock_Config();
+  MX_GPIO_Init();
+  LCD_Init();
+  LCD_Clear();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -169,399 +175,436 @@ int main(void)
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 
-	//Calibração do ADC
-	HAL_ADCEx_Calibration_Start(&hadc1);
+  //Calibração do ADC
+  HAL_ADCEx_Calibration_Start(&hadc1);
 
-	//Inicializa timers
-	//HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
-	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
-	HAL_TIM_Base_Start_IT(&htim3);
-	HAL_TIM_Base_Start_IT(&htim4);
+  //Inicializa timers
+  //HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
+  HAL_TIM_Base_Start_IT(&htim3);
+  HAL_TIM_Base_Start_IT(&htim4);
 
-	//captura a hora do sistema e converte para uint
-	strcpy(aux3, __TIME__);
-	horas = atoi(aux3);
-	strcpy(aux3, __TIME__ + 3);
-	minutos = atoi(aux3);
-	strcpy(aux3, __TIME__ + 6);
-	segundos = atoi(aux3);
+  //captura a hora do sistema e converte para uint
+  strcpy(auxrelogio, __TIME__);
+  horas = atoi(auxrelogio);
+  strcpy(auxrelogio, __TIME__ + 3);
+  minutos = atoi(auxrelogio);
+  strcpy(auxrelogio, __TIME__ + 6);
+  segundos = atoi(auxrelogio);
 
-	//Inicializa o display
-	LCD_Init();
-	LCD_Clear();
-	LCD_Set_Cursor(2, 1);
-	LCD_Write_String(" Iniciando...");
-	HAL_Delay(1000);
+  //Inicializa o display
+  LCD_Init();
+  LCD_Clear();
+  LCD_Set_Cursor(2, 1);
+  LCD_Write_String(" LIGANDO ");
+  HAL_Delay(1500);
 
-	//Insere as informações das capsulas na estrutura
-	capsules_init();
+  //Insere as informações das capsulas na estrutura
+  capsules_init();
 
-	/* Infinite loop */
-	LCD_Clear();
+  /* Infinite loop */
+  LCD_Clear();
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	while (1) {
+  while (1)
+  {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
 
-		//identificando capsula
-		Bn1 = capsules_get_value(GPIOA, Bn1_bit0, Bn1_bit1, Bn1_bit2);
+    //identificando capsula
+    Bn1 = capsules_get_value(GPIOA, Bn1_bit0, Bn1_bit1, Bn1_bit2);
 
-		//status dos pressostatos
-		estadoP1 = HAL_GPIO_ReadPin(GPIOB, P1);
-		estadoP2 = HAL_GPIO_ReadPin(GPIOB, P2);
+    //status dos pressostatos
+    estadoP1 = HAL_GPIO_ReadPin(GPIOB, P1);
+    estadoP2 = HAL_GPIO_ReadPin(GPIOB, P2);
 
-		if(!estadoP1)
-		{
-			LCD_Clear();
-			LCD_Set_Cursor(1, 1);
-			LCD_Write_String("Filtro Saturado");
-			tela = 0;
-		}
+    // verifica se filtro ta ok e se tem co2
+    if (!estadoP1)
+    {
+      LCD_Clear();
+      LCD_Set_Cursor(1, 1);
+      LCD_Write_String("Filtro Saturado");
+      tela = 0;
+    }
 
-		if ((Bn1 == 0 && !estadoP2) || (!estadoP1 && !estadoP2))
-		{
-			//Se sem CO2 e sem CAPSULAS Ou pressostatos vazios
-			if (!estadoP1 && !estadoP2)
-			{
-				HAL_Delay(2000);
-			}
+    if ((Bn1 == 0 && !estadoP2 && capsulas[Bn1].com_gas == sim) || (!estadoP1 && !estadoP2))
+    {
+      //Se sem CO2 e sem CAPSULAS Ou pressostatos vazios}
+      LCD_Clear();
+      LCD_Set_Cursor(1, 1);
+      LCD_Write_String("CO2 vazio");
+    }
 
-			LCD_Clear();
-			LCD_Set_Cursor(1, 1);
-			LCD_Write_String("CO2 vazio");
-			if (!estadoP1 && !estadoP2)
-			{
-				HAL_Delay(2000);
-			}
-		}
+    switch (tela)
+    {
+    case 0:
 
-		switch (tela)
-		{
-		    case 0:
+      //identifica se tem capsula e mostra hora
+      atualiza_hora(horas, minutos, segundos);
 
-		    	//identifica se tem capsula e mostra hora
-		        atualiza_hora(horas, minutos, segundos);
+      //se tem capsula vai pra prox tela
+      if (Bn1 != 0 && estadoP1)
+      {
+        tela = 1;
+      }
 
-		        if (Bn1 != 0 && estadoP1)
-		        {
-		            tela = 1;
-		        }
-		        else
-		        {
-		            estadoRelogio = 0;
-		            HAL_Delay(50);
-		        }
-		    break;
+      //se n tiver mostra relogio dnv
+      else
+      {
+        testeRelogio = 0;
+        HAL_Delay(50);
+      }
+      break;
 
-		    case 1:	//entra auqi para identificar a capsula
+    case 1: //entra auqi para identificar a capsula
 
-		        if (strcmp(capsulas[Bn1].nome, "Cap. nao cadast.") == 0 || Bn1 == 0)
-		        {
-		        	//Se n existe a capsula
-		            tela = 1;
-		            estadoRelogio = 0;
-		            HAL_Delay(50);
-		            break;
-		        }
+      if (strcmp(capsulas[Bn1].nome, "Cap. nao cadast.") == 0 || Bn1 == 0)
+      {
+        //Se n existe a capsula
+        tela = 1;
+        testeRelogio = 0;
+        HAL_Delay(50);
+        break;
+      }
 
-		        if (capsulas[Bn1].com_gas == sim && !estadoP2)
-		        {
-		        	//Se precisa de gas e n tem trava
-		            tela = 0;
-		            break;
-		        }
+      if (capsulas[Bn1].com_gas == sim && !estadoP2)
+      {
+        //Se precisa de gas e n tem trava
+        tela = 0;
+        break;
+      }
 
-		        if (strcmp(capsulas[Bn1].nome, "      Agua      ") == 0 && selecao == -1)
-		        {
-		        	//muda de estado se precisa escolher agua
-		            tela = 10;
-		            selecao = 0;
-		            break;
-		        }
+      if (strcmp(capsulas[Bn1].nome, "      Agua      ") == 0 && selecao == -1)
+      {
+        //muda de estado se precisa escolher agua
+        tela = 10;
+        selecao = 0;
+        break;
+      }
 
-		        if (estadoRelogio)
-		        {
-		        	//Se der pau e cancelar mostra relogio
-		            tela = 0;
-		        }
-		        else
-		        {
-		            LCD_Clear();
-		            LCD_Set_Cursor(1, 1);
-		            LCD_Write_String(capsulas[Bn1].nome);
-		            LCD_Set_Cursor(2, 1);
-		            LCD_Write_String(" Press S Start ");
-		            HAL_Delay(50);
-		        }
+      if (testeRelogio)
+      {
+        //Se der pau e cancelar mostra relogio
+        tela = 0;
+      }
 
-		        if (state_btn_s)
-		        {
-		            if (strcmp(capsulas[Bn1].nome, "      Agua      ") == 0 && selecao == 4)
-		            {
-		            	//Caso o usuario tenha inserido a capsula de Agua e não selecionato o
-						tela = 10;
-						state_btn_s = 0;
-						estadoRelogio = 0;
-		            		break;
-		            }
-		            tela = 2;
-		            estadoRelogio = 0;
-		        }
+      //mostra qual a capsula e espera aperta S pra começa
+      else
+      {
+        LCD_Clear();
+        LCD_Set_Cursor(1, 1);
+        LCD_Write_String(capsulas[Bn1].nome);
+        LCD_Set_Cursor(2, 1);
+        LCD_Write_String(" Press S Start ");
+        HAL_Delay(50);
+      }
 
-		        if (state_btn_c) {//Se o usuário inseriu a capsula e cancelou o início - muda o status do relógio
-		            estadoRelogio = 1;
-		        }
+      if (state_btn_s)
+      {
+    	  //se for agua vai rpa tela 10 se for outros vai pra 2
+        if (strcmp(capsulas[Bn1].nome, "      Agua      ") == 0 && selecao == 4)
+        {
+          //Caso o usuario tenha inserido a capsula de Agua e não selecionato o
+          tela = 10;
+          state_btn_s = 0;
+          testeRelogio = 0;
+          break;
+        }
+        tela = 2;
+        testeRelogio = 0;
+      }
 
-		    break;
+      if (state_btn_c)
+      {
+    	//Se o usuário inseriu a capsula e cancelou o início - muda o status do relógio
+        testeRelogio = 1;
+        LCD_Clear();
+      }
+
+      break;
+
+    case 2:
+
+      testee = Bn1;
+      Bn1 = capsules_get_value(GPIOA, Bn1_bit0, Bn1_bit1, Bn1_bit2);
+
+      //aqui compara se tiver diferente é pq troco a capsula e volta mostra o relogio
+      if (Bn1 != testee)
+      {
+        tela = 1;
+        testeRelogio = 1;
+      }
+      //se nao vai pra prox
+      if (state_btn_s == 1)
+      {
+        tela = 3;
+      }
+      break;
+
+    case 3: //Identifica qual o tipo de água da capsula e faz o aquecimento ou resfriamento se necessário
+
+      //Leitura das temperaturas do potenciomentro
+      T1 = 0;
+      T2 = 0;
+      for (j = 0; j < 6; j++)
+      {
+    	  //Lê 6 vezes os 12 canias para ter 36 amostra de cada sensor de temperatura
+        HAL_ADC_Start_DMA(&hadc1, adcData, NUMBER_OF_CONVERSION);
+        while (!adcDataReady)
+        {
+        }
+        if (adcDataReady)
+        {
+          adcDataReady = 0;
+          aux1 = 0;
+          aux1 = 0;
+          for (i = 0; i < NUMBER_OF_CONVERSION; i++)
+          {
+            if (i < 6)
+            {
+              aux1 += adcData[i];
+            }
+            else
+            {
+              aux2 += adcData[i];
+            }
+          }
+          aux1 /= (NUMBER_OF_CONVERSION / 2);
+          aux2 /= (NUMBER_OF_CONVERSION / 2);
+          aux1 *= scala_temperatura;
+          aux2 *= scala_temperatura;
+          T1 += aux1;
+          T2 += aux2;
+        }
+      }
+
+      T1 /= 6;
+      T2 /= 6;
 
 
-		    case 2:
 
+      if (strcmp(capsulas[Bn1].tipo_agua, "quente") == 0)
+      {
+        LCD_Clear();
+        LCD_Set_Cursor(1, 1);
+        LCD_Write_String(" Aquecendo agua ");
+        HAL_Delay(40);
 
-		        compararcap=Bn1;
-		        Bn1 = capsules_get_value(GPIOA, Bn1_bit0, Bn1_bit1, Bn1_bit2);
+        if (T1 >= capsulas[Bn1].temperatura_agua)
+        {                                             //Se a temperatura da água estiver menor ou igual a temperatura especificada na capsula
+          HAL_GPIO_WritePin(GPIOB, Y1, GPIO_PIN_SET); //Abre valvula de aguá gelada
+          tela = 4;                                   //Avança para o próximo estado
+          dutyCycle_TIM2_CH1 = 0;                     //Desliga o compressor
+          TIM2->CCR1 = dutyCycle_TIM2_CH1;
+        }
 
-		        if(Bn1 != compararcap){
-		            tela = 1;
-		            estadoRelogio = 1;
-		        }
+        else
+        {                                                                                                                 //Senão faz a ação de controle
+          dutyCycle_TIM2_CH1 = (100 - ((T1 * 100) / capsulas[Bn1].temperatura_agua)) * (MAX_DUTY_CYCLE_VALUE_TIM2 / 100); //Equação para o controle proporcional da resitencia
+          TIM2->CCR1 = dutyCycle_TIM2_CH1;
+        }
+      }
 
-		        if(state_btn_s == 1){
-		            tela = 3;
-		        }
-		        break;
+      if (strcmp(capsulas[Bn1].tipo_agua, "gelada") == 0)
+      {
+    	  //Se a temperatura da água estiver maior ou igual a temperatura especificada na capsula
+        LCD_Clear();
+        LCD_Set_Cursor(2, 1);
+        LCD_Write_String("  Gelando agua  ");
+        HAL_Delay(40);
 
+        if (T2 <= capsulas[Bn1].temperatura_agua)
+        {
+          HAL_GPIO_WritePin(GPIOB, Y2, GPIO_PIN_SET); //Abre valvula de água quente
+          tela = 4;                                   //Avança para o próximo estado
+          dutyCycle_TIM2_CH2 = 0;                     //Desliga a resitência
+          TIM2->CCR2 = dutyCycle_TIM2_CH2;  			//faz o tempo necessario
+        }
 
-		    case 3:	//Identifica qual o tipo de água da capsula e faz o aquecimento ou resfriamento se necessário
+        else
+        {                                                                             //Senão faz a ação de controle
+          dutyCycle_TIM2_CH2 = ((T2 * 100) / 50) * (MAX_DUTY_CYCLE_VALUE_TIM2 / 100); //Equação para o controle proporcional do compressor
+          TIM2->CCR2 = dutyCycle_TIM2_CH2;
+        }
+      }
 
-		        //Leitura das temperaturas ////
-		        T1 = 0;
-		        T2 = 0;
-		        for (j = 0; j < 6; j++) {//Lê 6 vezes os 12 canias para ter 36 amostra de cada sensor de temperatura
-		            HAL_ADC_Start_DMA(&hadc1, adcData, NUMBER_OF_CONVERSION);
-		            while (!adcDataReady) {
-		            }
-		            if (adcDataReady) {
-		            adcDataReady = 0;
-		            aux1 = 0;
-		            aux1 = 0;
-		            for (i = 0; i < NUMBER_OF_CONVERSION; i++) {
-		                if (i < 6) {
-		                aux1 += adcData[i];
-		                } else {
-		                aux2 += adcData[i];
-		                }
-		            }
-		            aux1 /= (NUMBER_OF_CONVERSION / 2);
-		            aux2 /= (NUMBER_OF_CONVERSION / 2);
-		            aux1 *= scala_temperatura;
-		            aux2 *= scala_temperatura;
-		            T1 += aux1;
-		            T2 += aux2;
-		            }
-		        }
-		        T1 /= 6;
-		        T2 /= 6;
-		        if (T1 > 100)
-		            T1 = 100;
-		        if (T1 < 5)
-		            T1 = 5;
-		        if (T2 > 50)
-		            T2 = 50;
-		        if (T2 < 5)
-		            T2 = 5;
+      if (strcmp(capsulas[Bn1].tipo_agua, "natural") == 0)
+      {
+    	  //Se o tipo de água for natural só abre a valvula
+        LCD_Clear();
+        LCD_Set_Cursor(2, 1);
+        LCD_Write_String("  Agua natural  ");
+        HAL_GPIO_WritePin(GPIOB, Y3, GPIO_PIN_SET); //Abre valvula de água natural
+        tela = 4;                                   //Avança para o próximo estado
+      }
 
-		        if (strcmp(capsulas[Bn1].tipo_agua, "quente") == 0) {
-		            LCD_Clear();
-		            LCD_Set_Cursor(1, 1);
-		            LCD_Write_String(" Aquecendo agua ");
-		            HAL_Delay(40);
-		            if (T1 >= capsulas[Bn1].temperatura_agua) {	//Se a temperatura da água estiver menor ou igual a temperatura especificada na capsula
-		            HAL_GPIO_WritePin(GPIOB, Y1, GPIO_PIN_SET);	//Abre valvula de aguá gelada
-		            tela = 4;	//Avança para o próximo estado
-		            dutyCycle_TIM2_CH1 = 0;	//Desliga o compressor
-		            TIM2->CCR1 = dutyCycle_TIM2_CH1;
-		            } else {	//Senão faz a ação de controle
-		            dutyCycle_TIM2_CH1 = (100
-		                - ((T1 * 100) / capsulas[Bn1].temperatura_agua))
-		                * (MAX_DUTY_CYCLE_VALUE_TIM2 / 100);//Equação para o controle proporcional da resitencia
-		            TIM2->CCR1 = dutyCycle_TIM2_CH1;
-		            }
-		        }
+      break;
 
-		        if (strcmp(capsulas[Bn1].tipo_agua, "gelada") == 0) {//Se a temperatura da água estiver maior ou igual a temperatura especificada na capsula
-		            LCD_Clear();
-		            LCD_Set_Cursor(2, 1);
-		            LCD_Write_String("  Gelando agua  ");
-		            HAL_Delay(40);
-		            if (T2 <= capsulas[Bn1].temperatura_agua) {
-		            HAL_GPIO_WritePin(GPIOB, Y2, GPIO_PIN_SET);	//Abre valvula de água quente
-		            tela = 4;	//Avança para o próximo estado
-		            dutyCycle_TIM2_CH2 = 0;	//Desliga a resitência
-		            TIM2->CCR2 = dutyCycle_TIM2_CH2;
-		            } else {	//Senão faz a ação de controle
-		            dutyCycle_TIM2_CH2 = ((T2 * 100) / 50)
-		                * (MAX_DUTY_CYCLE_VALUE_TIM2 / 100);//Equação para o controle proporcional do compressor
-		            TIM2->CCR2 = dutyCycle_TIM2_CH2;
-		            }
-		        }
+    case 4: //Ativa a bomba e o CO2
+      LCD_Clear();
+      LCD_Set_Cursor(2, 0);
+      LCD_Write_String(" preparando");
+      LCD_Set_Cursor(2, 1);
+      LCD_Write_String(" bebida");
 
-		        if (strcmp(capsulas[Bn1].tipo_agua, "natural") == 0) {//Se o tipo de água for natural só abre a valvula
-		            LCD_Clear();
-		            LCD_Set_Cursor(2, 1);
-		            LCD_Write_String("  Agua natural  ");
-		            HAL_GPIO_WritePin(GPIOB, Y3, GPIO_PIN_SET);	//Abre valvula de água natural
-		            tela = 4;	//Avança para o próximo estado
-		        }
+      //ve se precisa de gas ai ativa as bombas
+      if (capsulas[Bn1].com_gas == sim)
+      {
+        HAL_GPIO_WritePin(GPIOB, Y4, GPIO_PIN_SET); //Abre valvula de gás
+        for (i = 0; i <= 3000; i++)
+        { //Liga gradualmente a bomba
+          dutyCycle_TIM1_CH4 = i;
+          TIM1->CCR4 = dutyCycle_TIM1_CH4;
+          HAL_Delay(0.06);
+        }
 
-		        break;
+        HAL_Delay(((capsulas[Bn1].tempo_gas) * 1000) - 200);
+        HAL_GPIO_WritePin(GPIOB, Y4, GPIO_PIN_RESET); //Fecha valvula de gas
+        HAL_Delay(
+            ((capsulas[Bn1].tempo_agua - capsulas[Bn1].tempo_gas) * 1000) - 250);
+        for (i = 3000; i >= 0; i--)
+        { //Desliga gradualmete o bomba
+          dutyCycle_TIM1_CH4 = i;
+          TIM1->CCR4 = dutyCycle_TIM1_CH4;
+          HAL_Delay(0.08);
+        }
+      }
 
-		        case 4:	//Ativa a bomba e o CO2
-		        LCD_Clear();
-		        LCD_Set_Cursor(2, 0);
-		        LCD_Write_String(" preparando bebida");
+      else
+      {
+        for (i = 0; i <= 3000; i++)
+        {
+        	//Liga bomba
+          dutyCycle_TIM1_CH4 = i;
+          TIM1->CCR4 = dutyCycle_TIM1_CH4;
+          HAL_Delay(0.06);
+        }
+        HAL_Delay(((capsulas[Bn1].tempo_agua) * 1000) - 550);
 
-		        if (capsulas[Bn1].com_gas == sim) {
+        for (i = 3000; i >= 0; i--)
 
-		            HAL_GPIO_WritePin(GPIOB, Y4, GPIO_PIN_SET);	//Abre valvula de gás
-		            for (i = 0; i <= 3000; i++) {	//Liga gradualmente a bomba
-		            dutyCycle_TIM1_CH4 = i;
-		            TIM1->CCR4 = dutyCycle_TIM1_CH4;
-		            HAL_Delay(0.06);
-		            }
+        {
+        	//Desliga  bomba
+          dutyCycle_TIM1_CH4 = i;
+          TIM1->CCR4 = dutyCycle_TIM1_CH4;
+          HAL_Delay(0.08);
+        }
+      }
 
-		            HAL_Delay(((capsulas[Bn1].tempo_gas) * 1000) - 200);
-		            HAL_GPIO_WritePin(GPIOB, Y4, GPIO_PIN_RESET);//Fecha valvula de gas
-		            HAL_Delay(
-		                ((capsulas[Bn1].tempo_agua - capsulas[Bn1].tempo_gas)
-		                    * 1000) - 250);
-		            for (i = 3000; i >= 0; i--) {	//Desliga gradualmete o bomba
-		            dutyCycle_TIM1_CH4 = i;
-		            TIM1->CCR4 = dutyCycle_TIM1_CH4;
-		            HAL_Delay(0.08);
-		            }
+      //desliga os led e fecha as bomba
+      HAL_GPIO_WritePin(GPIOB, Y1, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(GPIOB, Y2, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(GPIOB, Y3, GPIO_PIN_RESET);
+      tela = 5;
 
-		        } else {
-		            for (i = 0; i <= 3000; i++) {	//Liga gradualmente a bomba
-		            dutyCycle_TIM1_CH4 = i;
-		            TIM1->CCR4 = dutyCycle_TIM1_CH4;
-		            HAL_Delay(0.06);
-		            }
-		            HAL_Delay(((capsulas[Bn1].tempo_agua) * 1000) - 550);
-		            for (i = 3000; i >= 0; i--) {	//Desliga gradualmete o bomba
-		            dutyCycle_TIM1_CH4 = i;
-		            TIM1->CCR4 = dutyCycle_TIM1_CH4;
-		            HAL_Delay(0.08);
-		            }
-		        }
-		        HAL_GPIO_WritePin(GPIOB, Y1, GPIO_PIN_RESET);//Fecha valvula de água quente
-		        HAL_GPIO_WritePin(GPIOB, Y2, GPIO_PIN_RESET);//Fecha valvula de água gelada
-		        HAL_GPIO_WritePin(GPIOB, Y3, GPIO_PIN_RESET);//Fecha valvula de água natural
-		        tela = 5;	//Avança para o próximo estado
+      break;
 
-		        break;
+    case 5: //quando acaba de preparar a bebida vem pra ca e pede pra zerar os bits
+      LCD_Clear();
+      LCD_Set_Cursor(2, 0);
+      LCD_Write_String(" Remover capsula");
+      HAL_Delay(2000);
+      if (Bn1 == 0)
+      {
+    	  //Se capsula removida
 
-		    case 5:	//Aviso para remoçâo de capsula usada
-		        LCD_Clear();
-		        LCD_Set_Cursor(2, 0);
-		        LCD_Write_String(" Remover capsula");
-		        HAL_Delay(2000);
-		        if (Bn1 == 0) {	//Se capsula removida
+        LCD_Clear();
+        tela = 0; //Retorna para o tela inicial
+      }
+      break;
 
-		        	LCD_Clear();
-		            tela = 0;	//Retorna para o estado inicial
+    case 10: //Seleção do tipo de água para a capsula de Agua
 
-		        }
-		    break;
+      if (strcmp(capsulas[Bn1].nome, "      Agua      ") != 0)
+      {           //Se o usuário retirar a capsula ou for uma capsula diferente
+        tela = 0; //Retorna para o estado inicial
+        selecao = -1;
+        break;
+      }
+      //Incremento se os botões forem pressionados
+      if (state_btn_mais)
+        selecao++;
+      if (state_btn_menos)
+        selecao--;
 
-		    case 10:	//Seleção do tipo de água para a capsula de Agua
+      //Se C presionado vai para o estado 1
+      if (state_btn_c)
+      {
+    	 LCD_Clear();
+        tela = 0;
+        selecao = -1;
+        LCD_Clear();
+        break;
+      }
 
-				if (strcmp(capsulas[Bn1].nome, "      Agua      ") != 0) {//Se o usuário retirar a capsula ou for uma capsula diferente
-					tela = 0;	//Retorna para o estado inicial
-					selecao = -1;
-					break;
-				}
-				//Incremento se os botões forem pressionados
-				if (state_btn_mais)
-					selecao++;
-				if (state_btn_menos)
-					selecao--;
+      //Organiza a seleçao
+      if (selecao == -1)
+        selecao = 3;
+      if (selecao == 4)
+        selecao = 0;
 
-				//Se C presionado vai para o estado 1
-				if (state_btn_c) {
-					tela = 1;
-					selecao = -1;
-					break;
-				}
+      if (last_selecao != selecao)
+      {
+        tela = 11;
+      }
 
-				//Organiza a seleção de forma circular
-				if (selecao == -1)
-					selecao = 3;
-				if (selecao == 4)
-					selecao = 0;
+      //Se S pressionado vai para o estado 1
+      if (state_btn_s)
+      {
+        tela = 1;
+      }
 
-				if(last_selecao != selecao){
-					tela = 11;
-				}
+      break;
 
-				//Se S pressionado vai para o estado 1
-				if (state_btn_s) {
-					tela = 1;
-				}
+    case 11:
 
-				break;
+      //As opções
+      if (selecao == 0)
+      {
+        LCD_Clear();
+        LCD_Set_Cursor(1, 1);
+        LCD_Write_String(" Tipo Agua ");
+        LCD_Set_Cursor(2, 1);
+        LCD_Write_String("   Agua quente  ");
+        strcpy(capsulas[Bn1].tipo_agua, "quente");
+        capsulas[Bn1].temperatura_agua = 80;
+        capsulas[Bn1].tempo_agua = 3;
+      }
+      if (selecao == 1)
+      {
+        LCD_Clear();
+        LCD_Set_Cursor(1, 1);
+        LCD_Write_String(" Tipo Agua ");
+        LCD_Set_Cursor(2, 1);
+        LCD_Write_String("   Agua gelada  ");
+        strcpy(capsulas[Bn1].tipo_agua, "gelada");
+        capsulas[Bn1].temperatura_agua = 10;
+        capsulas[Bn1].tempo_agua = 3;
+      }
+      if (selecao == 3)
+      {
+        LCD_Clear();
+        LCD_Set_Cursor(1, 1);
+        LCD_Write_String(" Tipo Agua ");
+        LCD_Set_Cursor(2, 1);
+        LCD_Write_String("   Agua natural  ");
+        strcpy(capsulas[Bn1].tipo_agua, "natural");
+        capsulas[Bn1].tempo_agua = 3;
+      }
 
-			case 11:
+      last_selecao = selecao;
+      tela = 10;
 
-				//As opções
-				if (selecao == 0) {
-					LCD_Clear();
-		            LCD_Set_Cursor(1, 1);
-		            LCD_Write_String(" Tipo Agua ");
-					LCD_Set_Cursor(2, 1);
-					LCD_Write_String("   Agua quente  ");
-					strcpy(capsulas[Bn1].tipo_agua, "quente");
-					capsulas[Bn1].temperatura_agua = 80;
-					capsulas[Bn1].tempo_agua = 3;
-				}
-				if (selecao == 1) {
-					LCD_Clear();
-		            LCD_Set_Cursor(1, 1);
-		            LCD_Write_String(" Tipo Agua ");
-					LCD_Set_Cursor(2, 1);
-					LCD_Write_String("   Agua gelada  ");
-					strcpy(capsulas[Bn1].tipo_agua, "gelada");
-					capsulas[Bn1].temperatura_agua = 10;
-					capsulas[Bn1].tempo_agua = 3;
-				}
-				if (selecao == 3) {
-					LCD_Clear();
-		            LCD_Set_Cursor(1, 1);
-		            LCD_Write_String(" Tipo Agua ");
-					LCD_Set_Cursor(2, 1);
-					LCD_Write_String("   Agua natural  ");
-					strcpy(capsulas[Bn1].tipo_agua, "natural");
-					capsulas[Bn1].tempo_agua = 3;
-				}
-
-				last_selecao = selecao;
-				tela = 10;
-
-				break;
-
-		    }
-
-		}
-
-	}
-  /* USER CODE END 3 */
-
+      break;
+    }
+  }
+}
+/* USER CODE END 3 */
 
 /**
   * @brief System Clock Configuration
@@ -588,8 +631,7 @@ void SystemClock_Config(void)
   }
   /** Initializes the CPU, AHB and APB buses clocks
   */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
@@ -726,7 +768,6 @@ static void MX_ADC1_Init(void)
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
-
 }
 
 /**
@@ -751,7 +792,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 0;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 3000-1;
+  htim2.Init.Period = 3000 - 1;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -793,7 +834,6 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 2 */
   HAL_TIM_MspPostInit(&htim2);
-
 }
 
 /**
@@ -838,7 +878,6 @@ static void MX_TIM3_Init(void)
   /* USER CODE BEGIN TIM3_Init 2 */
 
   /* USER CODE END TIM3_Init 2 */
-
 }
 
 /**
@@ -883,7 +922,6 @@ static void MX_TIM4_Init(void)
   /* USER CODE BEGIN TIM4_Init 2 */
 
   /* USER CODE END TIM4_Init 2 */
-
 }
 
 /**
@@ -899,7 +937,6 @@ static void MX_DMA_Init(void)
   /* DMA1_Channel1_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
-
 }
 
 /**
@@ -921,7 +958,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(Heart_Beat_GPIO_Port, Heart_Beat_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, Y1___V_lvula_de_para_alimenta__o_de__gua_quente_Pin|Y2___V_lvula_de_para_alimenta__o_de__gua_gelada_Pin|Y3___V_lvula_de_para_alimenta__o_de__gua_natural_Pin|Y4___V_lvula_de_para_alimenta__o_de_CO2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, Y1___V_lvula_de_para_alimenta__o_de__gua_quente_Pin | Y2___V_lvula_de_para_alimenta__o_de__gua_gelada_Pin | Y3___V_lvula_de_para_alimenta__o_de__gua_natural_Pin | Y4___V_lvula_de_para_alimenta__o_de_CO2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : Heart_Beat_Pin */
   GPIO_InitStruct.Pin = Heart_Beat_Pin;
@@ -931,74 +968,80 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(Heart_Beat_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : Button_Select_Pin Button_Cancel_Pin */
-  GPIO_InitStruct.Pin = Button_Select_Pin|Button_Cancel_Pin;
+  GPIO_InitStruct.Pin = Button_Select_Pin | Button_Cancel_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : Y1___V_lvula_de_para_alimenta__o_de__gua_quente_Pin Y2___V_lvula_de_para_alimenta__o_de__gua_gelada_Pin Y3___V_lvula_de_para_alimenta__o_de__gua_natural_Pin Y4___V_lvula_de_para_alimenta__o_de_CO2_Pin */
-  GPIO_InitStruct.Pin = Y1___V_lvula_de_para_alimenta__o_de__gua_quente_Pin|Y2___V_lvula_de_para_alimenta__o_de__gua_gelada_Pin|Y3___V_lvula_de_para_alimenta__o_de__gua_natural_Pin|Y4___V_lvula_de_para_alimenta__o_de_CO2_Pin;
+  GPIO_InitStruct.Pin = Y1___V_lvula_de_para_alimenta__o_de__gua_quente_Pin | Y2___V_lvula_de_para_alimenta__o_de__gua_gelada_Pin | Y3___V_lvula_de_para_alimenta__o_de__gua_natural_Pin | Y4___V_lvula_de_para_alimenta__o_de_CO2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : Button___Pin Button__A9_Pin */
-  GPIO_InitStruct.Pin = Button___Pin|Button__A9_Pin;
+  GPIO_InitStruct.Pin = Button___Pin | Button__A9_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : BN1__Leitor__ptico_para_detec__o_do_tipo_de_c_psula___bit0_Pin BN1__Leitor__ptico_para_detec__o_do_tipo_de_c_psula___bit1_Pin BN1__Leitor__ptico_para_detec__o_do_tipo_de_c_psula___bit2_Pin */
-  GPIO_InitStruct.Pin = BN1__Leitor__ptico_para_detec__o_do_tipo_de_c_psula___bit0_Pin|BN1__Leitor__ptico_para_detec__o_do_tipo_de_c_psula___bit1_Pin|BN1__Leitor__ptico_para_detec__o_do_tipo_de_c_psula___bit2_Pin;
+  GPIO_InitStruct.Pin = BN1__Leitor__ptico_para_detec__o_do_tipo_de_c_psula___bit0_Pin | BN1__Leitor__ptico_para_detec__o_do_tipo_de_c_psula___bit1_Pin | BN1__Leitor__ptico_para_detec__o_do_tipo_de_c_psula___bit2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : P1___Pressostato_de_filtro_de__gua_saturado__contato_NF__abre_se_filtro_saturado_Pin P2___Pressostato_de_cilindro_de_CO2_vazio__contato_NF__abre_se_cilindro_vazio_Pin */
-  GPIO_InitStruct.Pin = P1___Pressostato_de_filtro_de__gua_saturado__contato_NF__abre_se_filtro_saturado_Pin|P2___Pressostato_de_cilindro_de_CO2_vazio__contato_NF__abre_se_cilindro_vazio_Pin;
+  GPIO_InitStruct.Pin = P1___Pressostato_de_filtro_de__gua_saturado__contato_NF__abre_se_filtro_saturado_Pin | P2___Pressostato_de_cilindro_de_CO2_vazio__contato_NF__abre_se_cilindro_vazio_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
 }
 
 /* USER CODE BEGIN 4 */
 
 //Função para as inperrupções dos timers
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-	//Verifica qual time gerou a interrupção
-	if (htim == &htim3) {
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  //Verifica qual time gerou a interrupção
+  if (htim == &htim3)
+  {
 
-		/////Leitura botões//////
-		state_btn_c = HAL_GPIO_ReadPin(GPIOC, btn_c);
-		state_btn_mais = HAL_GPIO_ReadPin(GPIOA, btn_mais);
-		state_btn_menos = HAL_GPIO_ReadPin(GPIOA, btn_menos);
-		state_btn_s = HAL_GPIO_ReadPin(GPIOC, btn_s);
+    /////Leitura botões//////
+    state_btn_c = HAL_GPIO_ReadPin(GPIOC, btn_c);
+    state_btn_mais = HAL_GPIO_ReadPin(GPIOA, btn_mais);
+    state_btn_menos = HAL_GPIO_ReadPin(GPIOA, btn_menos);
+    state_btn_s = HAL_GPIO_ReadPin(GPIOC, btn_s);
 
-		//////Led para mostar que o sistemas esta funcionando////
-		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-	}
-	if (htim == &htim4) {
-		//Contado para o funcionamento do relógio
-		segundos++;
-		if (segundos == 60) {
-			segundos = 0;
-			minutos++;
-		}
-		if (minutos == 60) {
-			horas++;
-			minutos = 0;
-		}
-		if (horas == 24) {
-			horas = 0;
-		}
-	}
+    //////Led para mostar que o sistemas esta funcionando////
+    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+  }
+  if (htim == &htim4)
+  {
+    //Contado para o funcionamento do relógio
+    segundos++;
+    if (segundos == 60)
+    {
+      segundos = 0;
+      minutos++;
+    }
+    if (minutos == 60)
+    {
+      horas++;
+      minutos = 0;
+    }
+    if (horas == 24)
+    {
+      horas = 0;
+    }
+  }
 }
 
 //Função do DMA
-void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc) {
-	adcDataReady = 1;
+void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc)
+{
+  adcDataReady = 1;
 }
 
 /* USER CODE END 4 */
@@ -1010,12 +1053,12 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc) {
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-	/* User can add his own implementation to report the HAL error return state */
+  /* User can add his own implementation to report the HAL error return state */
 
   /* USER CODE END Error_Handler_Debug */
 }
 
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.

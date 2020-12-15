@@ -54,8 +54,8 @@ all: main-build
 main-build: Projeto_final.elf secondary-outputs
 
 # Tool invocations
-Projeto_final.elf: $(OBJS) $(USER_OBJS) C:\Users\User\STM32CubeIDE\workspace_1.5.0\Projeto_final\STM32F103C8TX_FLASH.ld
-	arm-none-eabi-gcc -o "Projeto_final.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\User\STM32CubeIDE\workspace_1.5.0\Projeto_final\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Projeto_final.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Projeto_final.elf: $(OBJS) $(USER_OBJS) C:\Users\Rafa\Desktop\Nova\ pasta\rafa\ aq\Projeto_final\STM32F103C8TX_FLASH.ld
+	arm-none-eabi-gcc -o "Projeto_final.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\Rafa\Desktop\Nova pasta\rafa aq\Projeto_final\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Projeto_final.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
