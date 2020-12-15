@@ -5,7 +5,7 @@
   
 ## Diagrama de Blocos do Sistema:
   O diagrama de blocos do sistema é apresentado na figura 1.
-  ![](https://github.com/rfpanizzon/Projeto_final_automacao/blob/main/diagrama%20blocos.PNG)
+  ![](https://github.com/rfpanizzon/Projeto_final_automacao/blob/main/img/diagrama%20blocos.PNG)
   
 ## Descrição:
 - P1 - Pressostato de filtro de água saturado, contato NF, abre se filtro saturado.
@@ -58,3 +58,20 @@ Caso o usuário cancele o início, a máquina deverá voltar a mostrar o relógi
 	Quando o filtro de água estiver saturado, monitorado por P1, uma mensagem de erro deverá ser exibida, o mesmo acontece para o cilindro de CO2, monitorado por P2.
 Lembre-se que o tamanho do display é limitado, veja como acomodar as mensagens de forma que fiquem legíveis.
 
+## Fluxograma do funcionamento:
+ - Visão geral do protótipo
+![](https://github.com/rfpanizzon/Projeto_final_automacao/blob/main/img/WhatsApp%20Image%202020-12-15%20at%2001.23.31%20(3).jpeg)
+![](https://github.com/rfpanizzon/Projeto_final_automacao/blob/main/img/WhatsApp%20Image%202020-12-15%20at%2001.23.31%20(2).jpeg)
+
+ - Escolhendo tipo água
+![](https://github.com/rfpanizzon/Projeto_final_automacao/blob/main/img/WhatsApp%20Image%202020-12-15%20at%2001.23.31%20(1).jpeg)
+
+ - Água aquecendo
+![](https://github.com/rfpanizzon/Projeto_final_automacao/blob/main/img/WhatsApp%20Image%202020-12-15%20at%2001.23.31.jpeg)
+
+ - Led sinalizando temperatura ideal
+![](https://github.com/rfpanizzon/Projeto_final_automacao/blob/main/img/WhatsApp%20Image%202020-12-15%20at%2001.23.30%20(2).jpeg)
+![](https://github.com/rfpanizzon/Projeto_final_automacao/blob/main/img/WhatsApp%20Image%202020-12-15%20at%2001.23.30%20(1).jpeg)
+
+ - Drink finalizado
+![](https://github.com/rfpanizzon/Projeto_final_automacao/blob/main/img/WhatsApp%20Image%202020-12-15%20at%2001.23.30.jpeg)
