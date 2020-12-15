@@ -1,0 +1,2 @@
+capsules.c:3:6:capsules_init	16	static
+capsules.c:62:9:capsules_get_value	24	static
