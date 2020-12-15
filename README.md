@@ -63,15 +63,15 @@ Lembre-se que o tamanho do display é limitado, veja como acomodar as mensagens 
 ![](https://github.com/rfpanizzon/Projeto_final_automacao/blob/main/img/WhatsApp%20Image%202020-12-15%20at%2001.23.31%20(3).jpeg)
 ![](https://github.com/rfpanizzon/Projeto_final_automacao/blob/main/img/WhatsApp%20Image%202020-12-15%20at%2001.23.31%20(2).jpeg)
 
- - Escolhendo tipo água
-![](https://github.com/rfpanizzon/Projeto_final_automacao/blob/main/img/WhatsApp%20Image%202020-12-15%20at%2001.23.31%20(1).jpeg)
+ - Selecionando chá
+![](https://github.com/rfpanizzon/Projeto_final_automacao/blob/main/img/chaquente.jpeg)
 
  - Água aquecendo
 ![](https://github.com/rfpanizzon/Projeto_final_automacao/blob/main/img/WhatsApp%20Image%202020-12-15%20at%2001.23.31.jpeg)
 
  - Led sinalizando temperatura ideal
 ![](https://github.com/rfpanizzon/Projeto_final_automacao/blob/main/img/WhatsApp%20Image%202020-12-15%20at%2001.23.30%20(2).jpeg)
-![](https://github.com/rfpanizzon/Projeto_final_automacao/blob/main/img/WhatsApp%20Image%202020-12-15%20at%2001.23.30%20(1).jpeg)
+![](https://github.com/rfpanizzon/Projeto_final_automacao/blob/main/img/prep%20bebida.jpeg)
 
- - Drink finalizado
+ - Bebida Finalizada
 ![](https://github.com/rfpanizzon/Projeto_final_automacao/blob/main/img/WhatsApp%20Image%202020-12-15%20at%2001.23.30.jpeg)
